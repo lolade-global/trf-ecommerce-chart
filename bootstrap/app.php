@@ -21,11 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
     })
-    ->withCommands(function (array $commands): array {
-        $commands[] = \App\Console\Commands\SendDailySalesReportCommand::class;
+    // ->withCommands(function (array $commands): array {
+    //     $commands[] = \App\Console\Commands\SendDailySalesReportCommand::class;
 
-        return $commands;
-    })
+    //     return $commands;
+    // })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
