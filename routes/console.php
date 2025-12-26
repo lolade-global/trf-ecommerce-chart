@@ -6,3 +6,9 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Schedule::command('sales:report')
+    ->dailyAt('18:00')
+    ->timezone('America/New_York')
+    ->onOneServer()
+    ->runInBackground();
