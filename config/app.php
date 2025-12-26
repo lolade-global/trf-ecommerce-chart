@@ -123,4 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'admin_email' => env('ADMIN_EMAIL', 'admin@trustfactory.test'),
+    'low_stock_threshold' => env('LOW_STOCK_THRESHOLD', 5), // Default threshold for low stock notifications
+
 ];
