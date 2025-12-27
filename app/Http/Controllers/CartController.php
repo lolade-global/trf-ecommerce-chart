@@ -5,11 +5,18 @@ namespace App\Http\Controllers;
 use App\Jobs\SendLowStockNotification;
 use App\Models\CartItem;
 use App\Models\Product;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CartController extends Controller
 {
+    protected $cartService;
+
+    public function __construct(CartService $cartService)
+    {
+        $this->cartService = $cartService;
+    }
     public function index()
     {
         $cartItems = auth()->user()
@@ -34,41 +41,18 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $product = Product::findOrFail($request->product_id);
+        try {
+            $cartItem = $this->cartService->addToCart(auth()->user(), $request->product_id, $request->quantity);
 
-        if ($product->stock_quantity < $request->quantity) {
             return response()->json([
-                'message' => 'Insufficient stock available.',
+                'message' => 'Product added to cart successfully.',
+                'cartItem' => $cartItem,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
             ], 400);
         }
-
-        $cartItem = CartItem::firstOrCreate(
-            [
-                'user_id' => auth()->id(),
-                'product_id' => $request->product_id,
-            ],
-            [
-                'quantity' => 0,
-            ]
-        );
-
-        $cartItem->increment('quantity', $request->quantity);
-
-        $cartItem->refresh()->load('product');
-
-        if ($cartItem->quantity > $product->stock_quantity) {
-            $cartItem->quantity = $product->stock_quantity;
-            $cartItem->save();
-        }
-
-        if ($product->isLowStock()) {
-            SendLowStockNotification::dispatch($product);
-        }
-
-        return response()->json([
-            'message' => 'Product added to cart successfully.',
-            'cartItem' => $cartItem,
-        ]);
     }
 
     public function update(Request $request, CartItem $cartItem)
@@ -79,31 +63,25 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $product = $cartItem->product;
+        try {
+            $updated = $this->cartService->updateCartItem(auth()->user(), $cartItem, $request->quantity);
 
-        if ($product->stock_quantity < $request->quantity) {
             return response()->json([
-                'message' => 'Insufficient stock available.',
+                'message' => 'Cart updated successfully.',
+                'cartItem' => $updated,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
             ], 400);
         }
-
-        $cartItem->update(['quantity' => $request->quantity]);
-
-        if ($product->isLowStock()) {
-            SendLowStockNotification::dispatch($product);
-        }
-
-        return response()->json([
-            'message' => 'Cart updated successfully.',
-            'cartItem' => $cartItem->load('product'),
-        ]);
     }
 
     public function remove(CartItem $cartItem)
     {
         $this->authorize('delete', $cartItem);
 
-        $cartItem->delete();
+        $this->cartService->removeCartItem(auth()->user(), $cartItem);
 
         return response()->json([
             'message' => 'Item removed from cart successfully.',
@@ -112,7 +90,7 @@ class CartController extends Controller
 
     public function clear()
     {
-        auth()->user()->cartItems()->delete();
+        $this->cartService->clearCart(auth()->user());
 
         return response()->json([
             'message' => 'Cart cleared successfully.',
