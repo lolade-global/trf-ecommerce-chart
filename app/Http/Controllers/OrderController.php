@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CartItem;
+use Inertia\Inertia;
 use App\Models\Order;
+use App\Models\CartItem;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -68,5 +70,18 @@ class OrderController extends Controller
                 'message' => 'Failed to place order. Please try again.',
             ], 500);
         }
+    }
+
+    public function index()
+    {
+        $orders = auth()->user()
+            ->orders()
+            ->with('orderItems.product')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('Orders/Index', [
+            'orders' => $orders,
+        ]);
     }
 }

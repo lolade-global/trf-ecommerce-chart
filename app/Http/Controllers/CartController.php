@@ -42,20 +42,19 @@ class CartController extends Controller
             ], 400);
         }
 
-        $cartItem = CartItem::updateOrCreate(
+        $cartItem = CartItem::firstOrCreate(
             [
                 'user_id' => auth()->id(),
                 'product_id' => $request->product_id,
             ],
             [
-                'quantity' => \DB::raw("quantity + {$request->quantity}"),
+                'quantity' => 0,
             ]
         );
 
-        $cartItem = CartItem::with('product')
-            ->where('user_id', auth()->id())
-            ->where('product_id', $request->product_id)
-            ->first();
+        $cartItem->increment('quantity', $request->quantity);
+
+        $cartItem->refresh()->load('product');
 
         if ($cartItem->quantity > $product->stock_quantity) {
             $cartItem->quantity = $product->stock_quantity;

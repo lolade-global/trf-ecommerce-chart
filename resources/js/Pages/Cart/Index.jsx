@@ -18,7 +18,7 @@ export default function Cart({ auth, cartItems: initialCartItems, total: initial
         setLoading(prev => ({ ...prev, [cartItemId]: true }));
 
         try {
-            const response = await axios.put(`/api/cart/${cartItemId}`, {
+            const response = await axios.put(`/cart/${cartItemId}`, {
                 quantity: newQuantity,
             });
 
@@ -52,7 +52,7 @@ export default function Cart({ auth, cartItems: initialCartItems, total: initial
         setLoading(prev => ({ ...prev, [cartItemId]: true }));
 
         try {
-            await axios.delete(`/api/cart/${cartItemId}`);
+            await axios.delete(`/cart/${cartItemId}`);
 
             const updatedItems = cartItems.filter(item => item.id !== cartItemId);
             setCartItems(updatedItems);
@@ -88,7 +88,7 @@ export default function Cart({ auth, cartItems: initialCartItems, total: initial
         setIsCheckingOut(true);
 
         try {
-            const response = await axios.post('/api/orders');
+            const response = await axios.post('/orders');
 
             setNotification({
                 type: 'success',
@@ -109,6 +109,31 @@ export default function Cart({ auth, cartItems: initialCartItems, total: initial
             setTimeout(() => setNotification(null), 3000);
         } finally {
             setIsCheckingOut(false);
+        }
+    };
+
+    const clearCart = async () => {
+        if (!confirm('Are you sure you want to clear your entire cart?')) return;
+
+        try {
+            await axios.delete('/cart');
+
+            setCartItems([]);
+            setTotal(0);
+
+            setNotification({
+                type: 'success',
+                message: 'Cart cleared successfully',
+            });
+
+            setTimeout(() => setNotification(null), 3000);
+        } catch (error) {
+            setNotification({
+                type: 'error',
+                message: 'Failed to clear cart',
+            });
+
+            setTimeout(() => setNotification(null), 3000);
         }
     };
 
@@ -258,9 +283,15 @@ export default function Cart({ auth, cartItems: initialCartItems, total: initial
 
                                     <button
                                         onClick={() => setShowCheckout(true)}
-                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition"
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition mb-3"
                                     >
                                         Proceed to Checkout
+                                    </button>
+                                    <button
+                                        onClick={clearCart}
+                                        className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-semibold transition"
+                                    >
+                                        Clear Cart
                                     </button>
                                 </div>
                             </div>

@@ -12,7 +12,7 @@ export default function Products({ auth, products }) {
         setLoading(prev => ({ ...prev, [productId]: true }));
 
         try {
-            const response = await axios.post('/api/cart/add', {
+            const response = await axios.post('/cart/add', {
                 product_id: productId,
                 quantity: 1,
             });
